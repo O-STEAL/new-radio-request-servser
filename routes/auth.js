@@ -1,17 +1,16 @@
-// 회원가입, 로그인, 아이디 중복체크 API 라우터
 const express = require("express");
 const { User } = require("../models");
 const router = express.Router();
 
 /**
- * 회원가입 API
- * POST /auth/register
+ * 회원가입
+ * POST /auth/register 형식으로
  */
 router.post("/register", async (req, res) => {
   // 프론트에서 보낸 값 구조 분해
   const { username, name, password } = req.body;
   try {
-    // 필수값 누락 시 에러 반환
+    // 필수값 중 하나라도 없으면 400 반환
     if (!username || !name || !password)
       return res.status(400).json({ message: "필수값 누락" });
 
@@ -30,8 +29,8 @@ router.post("/register", async (req, res) => {
 });
 
 /**
- * 로그인 API
- * POST /auth/login
+ * 로그인
+ * POST /auth/login 형식으로
  */
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
@@ -52,13 +51,13 @@ router.post("/login", async (req, res) => {
 });
 
 /**
- * username 중복 체크 API
- * POST /auth/check-id
+ * username 중복 체크
+ * POST /auth/check-id 형식
  */
 router.post("/check-id", async (req, res) => {
   const { username } = req.body;
   try {
-    // 해당 username이 이미 존재하는지 확인
+    // username이 이미 존재하는지 확인
     const exists = await User.findOne({ where: { username } });
     res.json({ exists: !!exists }); // true/false 반환
   } catch (e) {
