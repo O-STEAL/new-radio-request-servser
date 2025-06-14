@@ -10,7 +10,8 @@ const sequelize = new Sequelize({
 
 // 유저 모델
 const User = sequelize.define("User", {
-  userId: { type: DataTypes.STRING, unique: true, allowNull: false }, // 유저 ID (중복 X)
+  username: { type: DataTypes.STRING, unique: true, allowNull: false }, // 유저 ID (중복 X)
+  name: { type: DataTypes.STRING, allowNull: false }, // 유저 이름
   password: { type: DataTypes.STRING, allowNull: false }, // 비밀번호 (암호화 X)
 });
 
