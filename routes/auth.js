@@ -21,8 +21,7 @@ router.post("/register", async (req, res) => {
 
     // 새 유저 등록
     await User.create({ username, name, password });
-
-    res.json({ message: `${name}님, 환영합니다!` });
+    res.status(201).json({ message: `${name}님, 환영합니다!` });
   } catch (e) {
     res.status(500).json({ message: "서버 오류" });
   }
