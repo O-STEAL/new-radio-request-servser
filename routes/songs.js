@@ -2,44 +2,54 @@ const express = require("express");
 const { Song, User } = require("../models");
 const router = express.Router();
 
-console.log("songs.js 파일 로드");
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-console.log("YOUTUBE_API_KEY:", YOUTUBE_API_KEY);
 
-// 유튜브 영상 ID 추출 함수
 function extractYoutubeVideoId(url) {
-  const regex =
-    /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regex);
-  return match ? match[1] : null;
-}
-
-// 유튜브 영상 제목 가져오기 함수
-async function fetchYoutubeTitle(videoId) {
-  console.log("fetchYoutubeTitle 호출됨:", videoId);
-  if (!videoId) return "";
-  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${YOUTUBE_API_KEY}`;
   try {
-    const res = await fetch(apiUrl);
-    if (!res.ok) {
-      console.log("유튜브 API 응답코드:", res.status, await res.text());
-      return "";
+    const urlObj = new URL(url);
+    if (urlObj.hostname === "youtu.be") {
+      return urlObj.pathname.slice(1);
     }
-    const data = await res.json();
-    console.log("유튜브 API 결과:", data);
-    return (data.items && data.items[0] && data.items[0].snippet.title) || "";
+    if (urlObj.hostname.includes("youtube.com")) {
+      return urlObj.searchParams.get("v");
+    }
+    return null;
   } catch (e) {
-    console.error("YouTube fetch error:", e);
-    return "";
+    return null;
   }
 }
 
-// POST /songs/submit
+async function fetchYoutubeInfo(videoId) {
+  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${YOUTUBE_API_KEY}`;
+  try {
+    const res = await fetch(apiUrl);
+    if (!res.ok) return { title: "", thumbnailUrl: "" };
+    const data = await res.json();
+    if (data.items && data.items[0]) {
+      const snippet = data.items[0].snippet;
+      return {
+        title: snippet.title,
+        thumbnailUrl:
+          snippet.thumbnails?.high?.url ||
+          snippet.thumbnails?.medium?.url ||
+          snippet.thumbnails?.default?.url ||
+          `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      };
+    }
+  } catch (e) {
+    console.error("YouTube fetch error:", e);
+  }
+  return {
+    title: "",
+    thumbnailUrl: videoId
+      ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+      : "",
+  };
+}
+
 router.post("/submit", async (req, res) => {
   const { username, anonymous, songLink, hasStory, story } = req.body;
   try {
-    console.log("=== /submit 라우터 진입 ===", req.body);
-
     if (
       !username ||
       anonymous === undefined ||
@@ -53,14 +63,16 @@ router.post("/submit", async (req, res) => {
 
     const today = new Date().toISOString().slice(0, 10);
 
-    // 유튜브 영상 제목 추출
-    let songTitle = "";
+    let songTitle = songLink;
+    let thumbnailUrl = "";
+
     const videoId = extractYoutubeVideoId(songLink);
-    console.log("추출된 videoId:", videoId);
     if (videoId) {
-      songTitle = await fetchYoutubeTitle(videoId);
+      const info = await fetchYoutubeInfo(videoId);
+      songTitle = info.title || songLink;
+      thumbnailUrl =
+        info.thumbnailUrl || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
     }
-    if (!songTitle) songTitle = songLink; // 실패 시 링크 자체 저장
 
     await Song.create({
       date: today,
@@ -69,6 +81,7 @@ router.post("/submit", async (req, res) => {
       story: hasStory ? story : "",
       songLink,
       songTitle,
+      thumbnailUrl,
       userId: user.id,
     });
     res.status(201).json({ message: "신청곡 등록 완료!" });
