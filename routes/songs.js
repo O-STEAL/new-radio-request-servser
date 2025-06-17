@@ -29,6 +29,7 @@ async function fetchYoutubeInfo(videoId) {
       const snippet = data.items[0].snippet;
       return {
         title: snippet.title,
+        channelTitle: snippet.channelTitle,
         thumbnailUrl:
           snippet.thumbnails?.high?.url ||
           snippet.thumbnails?.medium?.url ||
@@ -70,6 +71,7 @@ router.post("/submit", async (req, res) => {
     if (videoId) {
       const info = await fetchYoutubeInfo(videoId);
       songTitle = info.title || songLink;
+      channelTitle = info.channelTitle || "";
       thumbnailUrl =
         info.thumbnailUrl || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
     }
@@ -81,6 +83,7 @@ router.post("/submit", async (req, res) => {
       story: hasStory ? story : "",
       songLink,
       songTitle,
+      channelTitle,
       thumbnailUrl,
       userId: user.id,
     });

@@ -21,6 +21,7 @@ const Song = sequelize.define("Song", {
   story: { type: DataTypes.TEXT },
   songLink: { type: DataTypes.STRING },
   songTitle: { type: DataTypes.STRING },
+  channelTitle: { type: DataTypes.STRING },
   thumbnailUrl: { type: DataTypes.STRING },
 });
 
