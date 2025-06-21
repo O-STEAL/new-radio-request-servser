@@ -15,16 +15,21 @@ exports.register = async (req, res, next) => {
   }
 };
 
+const { sign } = require("../utils/jwt");
+
 exports.login = async (req, res, next) => {
   const { username, password } = req.body;
   try {
     const user = await User.findOne({ where: { username, password } });
     if (!user)
       return res.status(401).json({ message: "아이디 / 비밀번호 오류" });
+    // JWT 토큰 발급
+    const token = sign({ username: user.username, name: user.name, id: user.id });
     res.json({
       message: `${user.name}님, 환영합니다!`,
       username: user.username,
       name: user.name,
+      token,
     });
   } catch (e) {
     next(e);
