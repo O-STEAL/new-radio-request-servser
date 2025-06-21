@@ -4,17 +4,20 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const { sequelize } = require("./models");
+const errorHandler = require("./utils/errorHandler");
 
 const authRoutes = require("./routes/auth");
 const songRoutes = require("./routes/songs");
 
 const app = express();
-app.use(cors()); // CORS 허용
-app.use(bodyParser.json()); // JSON 형식 요청 바디 파싱
+app.use(cors());
+app.use(bodyParser.json());
 
-// API 엔드포인트 연결
 app.use("/auth", authRoutes);
 app.use("/songs", songRoutes);
+
+// 전역 에러 핸들러
+app.use(errorHandler);
 
 const PORT = 4000;
 
